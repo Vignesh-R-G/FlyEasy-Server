@@ -39,7 +39,7 @@ exports.getAllBookingDetails=async(req,res)=>{
 exports.getSpecificBookings=async(req,res)=>{
     try{
 
-        const departure_time=await new Date(req.params.departure_time).toLocaleString()
+        const departure_time=await req.params.departure_time
         const getByFlights=await detailschema.findOne({$and:[{Flight_Id:req.params.flight_id},{Departure_Time:departure_time}]})
         if(getByFlights){
             const getAllBookings=await bookingschema.find({Schedule_Id:getByFlights._id})

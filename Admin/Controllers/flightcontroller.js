@@ -37,10 +37,9 @@ exports.addNewFlight=async(req,res)=>{
                 From_Location:req.body.from_location,
                 To_Location:req.body.to_location,
 
-                //coverting UTC to Local String
-
-                Departure_Time:new Date(req.body.departure_time).toLocaleString(),
-                Arrival_Time:new Date(req.body.arrival_time).toLocaleString(),
+                Date:req.body.departure_time.slice(0,10),
+                Departure_Time:req.body.departure_time,
+                Arrival_Time:req.body.arrival_time,
                 Duration:req.body.duration,
                 Ticket_Price:req.body.ticket_price
 
@@ -89,8 +88,9 @@ exports.addSchedule=async(req,res)=>{
                 Flight_Name:flight_name,
                 From_Location:req.body.from_location,
                 To_Location:req.body.to_location,
-                Departure_Time:new Date(req.body.departure_time).toLocaleString(),
-                Arrival_Time:new Date(req.body.arrival_time).toLocaleString(),
+                Date:req.body.departure_time.slice(0,10),
+                Departure_Time:req.body.departure_time,
+                Arrival_Time:req.body.arrival_time,
                 Duration:req.body.duration,
                 Ticket_Price:req.body.ticket_price
 
@@ -224,11 +224,10 @@ exports.getScheduleDetails=async(req,res)=>{
 
 
 
-//To Provide the flight details based on user requirements
+//To Provide the flight details based on user requirements(date and time)
 exports.filterFlights=async(req,res)=>{
     try{
-        const flightsAvailable=await detailschema.find({$and:[{From_Location:req.params.from_location},{To_Location:req.params.to_location},{Departure_Time:new Date(req.params.departure_time).toLocaleString()}]})
-        console.log(new Date(req.params.departure_time.toLocaleString()))
+        const flightsAvailable=await detailschema.find({$and:[{From_Location:req.params.from_location},{To_Location:req.params.to_location},{Departure_Time:req.params.departure_time}]})
         if(flightsAvailable.length===0)
             res.json({status:false,msg:"No Flights Available as per your requirements"})
         else
@@ -238,3 +237,26 @@ exports.filterFlights=async(req,res)=>{
         res.json({status:false,msg:"Error occured in filtering the Flights !"})
     }
 }
+
+
+//To Provide the flight details based on user requirements(date)
+exports.filterFlightsByDate=async(req,res)=>{
+    try{
+        const date=req.params.departure_time.slice(0,10)
+        const flightsAvailable=await detailschema.find({$and:[{From_Location:req.params.from_location},{To_Location:req.params.to_location},{Date:date}]})
+        console.log(req.params.departure_time.slice(0,10))
+        if(flightsAvailable.length===0)
+            res.json({status:false,msg:"No Flights Available as per your requirements"})
+        else
+            res.json({status:true,msg:flightsAvailable})
+    }
+    catch(err){
+        res.json({status:false,msg:"Error occured in filtering the Flights !"})
+    }
+}
+
+
+
+
+
+

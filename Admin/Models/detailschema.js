@@ -23,6 +23,10 @@ const detailschema=mongoose.Schema({
         trim:true,
         required:true
     },
+    Date:{
+        type:String,
+        required:true
+    },
     Departure_Time:{
         type:String,
         required:true
