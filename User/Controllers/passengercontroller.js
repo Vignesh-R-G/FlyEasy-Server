@@ -1,5 +1,7 @@
 const express=require('express')
 const mongoose=require('mongoose')
+const nodemailer=require('nodemailer')
+require('dotenv/config')
 
 //Importing bookingschema and passengerschema
 const bookingschema=require('../Models/bookingschema')
@@ -37,6 +39,32 @@ exports.bookTickets=async(req,res)=>{
             await passengerDetails.save()
             
         })
+
+        // Sending Mail to the Booked email
+        console.log(process.env.MAIL)
+        console.log(process.env.PASS)
+        const sender=nodemailer.createTransport({
+            service:"gmail",
+            auth:{
+                user:process.env.MAIL,
+                pass:process.env.PASS
+            }
+        })
+        const composemail={
+            from:process.env.MAIL,
+            to:req.body.booking_email,
+            subject:"FlyEasy - Regarding Flight Ticket Booking ",
+            text:"Thanks for reaching us ! Your ticket has been booked successfully !You can view your booking details in our application"
+        }
+        sender.sendMail(composemail,(err)=>{
+            if(err){
+                console.log(err)
+            }
+            else{
+                console.log('Mail Sent Successfully')
+            }
+        })
+
         res.json({status:true,msg:"Ticket Booked Successfully",booking_id:booking_id})
     }
     catch(err){
@@ -49,9 +77,34 @@ exports.bookTickets=async(req,res)=>{
 //To cancel the Ticket
 exports.cancelTicket=async(req,res)=>{
     try{
+        const findEmail=await bookingschema.findOne({_id:req.params.booking_id})
         const deleteBooking=await bookingschema.deleteOne({_id:req.params.booking_id})
         const deletePassengers=await passengerschema.deleteMany({Booking_Id:req.params.booking_id})
         const deleteUserHistory=await historyschema.deleteOne({Booking_Id:req.params.booking_id})
+        
+        //sending the mail
+        const sender=nodemailer.createTransport({
+            service:"gmail",
+            auth:{
+                user:process.env.MAIL,
+                pass:process.env.PASS
+            }
+        })
+        const compose={
+            from:process.env.MAIL,
+            to:findEmail.Booking_Email,
+            subject:"FlyEasy -Regarding Flight Ticket Booking",
+            text:"Your ticket has been cancelled successfully !"
+        }
+        sender.sendMail(compose,(err)=>{
+            if(err){
+                console.log(err)
+            }
+            else{
+                console.log('Mail sent successfully !')
+            }
+        })
+
         res.json({status:true,msg:"Ticket Cancelled successfully",deletedBooking:deleteBooking,deletedPassengers:deletePassengers})
     }
     catch(err){

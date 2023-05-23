@@ -1,10 +1,14 @@
 const express=require('express')
 const mongoose=require('mongoose')
+const nodemailer=require('nodemailer')
 
-//Importing the flightschema,detailschema and seat schema
+//Importing the flightschema,detailschema,seat schema,booking schema and history schema
 const flightschema=require('../Models/flightschema')
 const detailschema=require('../Models/detailschema')
 const seatschema=require('../Models/seatschema')
+const bookingschema=require('../../User/Models/bookingschema')
+const historyschema=require('../../User/Models/historyschema')
+
 
 //To add the new flight and its schedule
 exports.addNewFlight=async(req,res)=>{
@@ -142,8 +146,39 @@ exports.deleteSchedule=async(req,res)=>{
     try{
 
         //removing the schedule of a particular flight
+        const findFlight=await detailschema.findOne({_id:req.params.schedule_id})
         const removeSchedule=await detailschema.deleteOne({_id:req.params.schedule_id})
         const modifySeats=await seatschema.deleteOne({Schedule_Id:req.params.schedule_id})
+
+        //sending the mail to all booked email's
+        const bookedemail=await bookingschema.find({Schedule_Id:req.params.schedule_id})
+        bookedemail.map(async(x)=>{
+            const sender=nodemailer.createTransport({
+                service:"gmail",
+                auth:{
+                    user:process.env.MAIL,
+                    pass:process.env.PASS
+                }
+            })
+            const compose={
+                from:process.env.MAIL,
+                to:x.Booking_Email,
+                subject:"FlyEasy -Regarding Flight Ticket Booking - "+findFlight.Flight_Name,
+                text:"Due to certain issues, the flight schedule has been deleted ! You can book any other flights on that day in our FlyEasy Application !"
+            }
+            sender.sendMail(compose,(err)=>{
+                if(err){
+                    console.log(err)
+                }
+                else{
+                    console.log('Mail sent successfully !')
+                }
+            })
+            const removeHistory=await historyschema.deleteOne({Booking_Id:x._id})
+        })
+        const removeBookings=await bookingschema.deleteMany({Schedule_Id:req.params.schedule_id})
+        
+
         res.json({status:true,msg:"Schedule on that partiular day deleted successfully !",removedSchedule:removeSchedule,modifiedSeats:modifySeats})
 
     }
@@ -158,9 +193,41 @@ exports.deleteFlight=async(req,res)=>{
     try{
 
         //removing all the details of the flight
+        const getAllSchedules=await detailschema.find({Flight_Id:req.params.flight_id})
         const removeFlight=await flightschema.deleteOne({Flight_Id:req.params.flight_id})
         const removeAllSchedules=await detailschema.deleteMany({Flight_Id:req.params.flight_id})
         const modifySeats=await seatschema.deleteMany({Flight_Id:req.params.flight_id})
+
+        //sending the mail to all booked email's
+        getAllSchedules.map(async (y)=>{
+        const bookedemail=await bookingschema.find({Schedule_Id:y._id})
+        bookedemail.map(async(x)=>{
+            const sender=nodemailer.createTransport({
+                service:"gmail",
+                auth:{
+                    user:process.env.MAIL,
+                    pass:process.env.PASS
+                }
+            })
+            const compose={
+                from:process.env.MAIL,
+                to:x.Booking_Email,
+                subject:"FlyEasy -Regarding Flight Ticket Booking - "+getAllSchedules[0].Flight_Name,
+                text:"Due to certain issues, the flight schedule has been deleted ! You can book any other flights on that day in our FlyEasy Application !"
+            }
+            sender.sendMail(compose,(err)=>{
+                if(err){
+                    console.log(err)
+                }
+                else{
+                    console.log('Mail sent successfully !')
+                }
+            })
+            const removeHistory=await historyschema.deleteOne({Booking_Id:x._id})
+        })
+        const removeBookings=await bookingschema.deleteMany({Schedule_Id:y._id})
+        })
+
         res.json({status:true,msg:"Flight Deleted Successfully",removedFlight:removeFlight,removedSchedule:removeAllSchedules,modifiedSeats:modifySeats})
 
     }
@@ -251,9 +318,13 @@ exports.filterFlightsByDate=async(req,res)=>{
             res.json({status:true,msg:flightsAvailable})
     }
     catch(err){
+        console.log(err)
         res.json({status:false,msg:"Error occured in filtering the Flights !"})
     }
 }
+
+
+
 
 
 
