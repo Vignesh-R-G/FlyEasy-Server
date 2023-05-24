@@ -57,6 +57,9 @@ exports.addNewFlight=async(req,res)=>{
                 Schedule_Id:schedule_id,
                 Flight_Id:req.body.flight_id,
                 Flight_Name:req.body.flight_name,
+                Seat_Number:"A0",
+                Booking_Id:"XXXXXXX",
+                Booked_Passenger_Email:"flyeasya@gmail.com"
 
             })
             await seatDetails.save()
@@ -107,8 +110,10 @@ exports.addSchedule=async(req,res)=>{
                 
                 Schedule_Id:schedule_id,
                 Flight_Id:req.body.flight_id,
-                Flight_Name:flight_name
-
+                Flight_Name:flight_name,
+                Seat_Number:"A0",
+                Booking_Id:"XXXXXXX",
+                Booked_Passenger_Email:"flyeasya@gmail.com"
             })
             await seatDetails.save()
 

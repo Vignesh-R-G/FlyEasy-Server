@@ -26,6 +26,16 @@ const seatschema=mongoose.Schema({
         type:Boolean,
         default:true,
         required:true
+    },
+    Seat_Number:{
+        type:String
+    },
+    Booking_Id:{
+        type:String
+    },
+    Booked_Passenger_Email:{
+        type:String,
+        trim:true
     }
 })
 
